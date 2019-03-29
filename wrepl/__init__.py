@@ -81,6 +81,7 @@ class Watcher(PatternMatchingEventHandler):
         self.processing = False
     def process(self):
         while len(self.que) > 0:
+            print('rest queue count: {}'.format(len(self.que)), file=sys.stderr)
             x = self.que.pop(0)
             y = self.subText(x, self.lastText)
             if y == '':
@@ -105,7 +106,6 @@ class Watcher(PatternMatchingEventHandler):
             z = '\n'.join([self.ft['comment'] + ' ' + label, y])
             self.appendExed(z, sout, serr)
             self.setLast(x)
-            print('rest queue count: {}'.format(len(self.que)), file=sys.stderr)
     def subText(self, newer, older):
         # 最終行の改行
         n1 = normalizeText(newer)
