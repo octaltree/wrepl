@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from watcher import Watcher
+from .watcher import Watcher
 
 filetype = [
         ('python3', {
