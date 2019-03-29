@@ -3,5 +3,6 @@ Watch-Read-Eval-Print Loop
 
 # Usage
 ```
-wrepl foo.py
+touch foo.py
+wrepl.py foo.py
 ```
