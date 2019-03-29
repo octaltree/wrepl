@@ -25,7 +25,7 @@ def parse() -> int:
 
 def main(args) -> int:
     target = Path(args.file[0])
-    if not target.is_file():
+    if target.is_dir():
         print('{} not found'.format(target), file=sys.stderr)
         return 1
     dn = Path(target.name + '.wrepl')
@@ -37,6 +37,7 @@ def main(args) -> int:
     if lock.exists():
         print('{} is locked. check other process'.format(dn), file=sys.stderr)
         return 1
+    target.touch()
     exed.touch()
     last.touch()
     lock.touch()
