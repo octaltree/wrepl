@@ -53,8 +53,6 @@ def main(args) -> int:
         lock.unlink()
 
 class Watcher(PatternMatchingEventHandler):
-    processing = False
-    que = []
     def __init__(self, ft, target, last, exed, sess):
         super(Watcher, self).__init__(patterns=['*' + target.name])
         self.ft = ft
@@ -73,39 +71,33 @@ class Watcher(PatternMatchingEventHandler):
                 + normalizeText(serr, '{}2 '.format(self.ft['comment'])))
         self.exed.write_text(text)
     def on_modified(self, evt):
-        self.que += [self.target.read_text()]
-        print('rest queue count: {}'.format(len(self.que)), file=sys.stderr)
-        if self.processing:
+        x = self.target.read_text()
+        label = (self.ft['comment'] + ' ' +
+                datetime.utcnow().isoformat(timespec='seconds') + 'Z')
+        print(label)
+        y = self.subText(x, self.lastText)
+        if y == '' or y == '\n':
+            print('no diff', file=sys.stderr)
             return
-        self.processing = True
-        self.process()
-        self.processing = False
-    def process(self):
-        while len(self.que) > 0:
-            x = self.que.pop(0)
-            y = self.subText(x, self.lastText)
-            if y == '':
-                continue
-            label = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
-            script = normalizeText('\n'.join([
-                self.ft['loader'](str(self.sess)), y,
-                self.ft['saver'](str(self.sess))]))
-            repl = subprocess.Popen(self.ft['executable'], shell=True,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
-            repl.stdin.write(script.encode('utf-8'))
-            repl.stdin.flush()
-            repl.stdin.close()
-            repl.wait()
-            sout = repl.stdout.read().decode('utf-8')
-            serr = repl.stderr.read().decode('utf-8')
-            print(sout, end='', flush=True)
-            print(serr, file=sys.stderr, end='', flush=True)
-            # ログ
-            z = '\n'.join([self.ft['comment'] + ' ' + label, y])
-            self.appendExed(z, sout, serr)
-            self.setLast(x)
+        print(y, end='', flush=True)
+        script = normalizeText('\n'.join([
+            self.ft['loader'](str(self.sess)), y,
+            self.ft['saver'](str(self.sess))]))
+        repl = subprocess.Popen(self.ft['executable'], shell=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        repl.stdin.write(script.encode('utf-8'))
+        repl.stdin.flush()
+        repl.stdin.close()
+        repl.wait()
+        sout = repl.stdout.read().decode('utf-8')
+        serr = repl.stderr.read().decode('utf-8')
+        print(sout, end='', flush=True)
+        print(serr, file=sys.stderr, end='', flush=True)
+        # ログ
+        self.appendExed('\n'.join([label, y]), sout, serr)
+        self.setLast(x)
     def subText(self, newer, older):
         # 最終行の改行
         n1 = normalizeText(newer)
@@ -119,7 +111,7 @@ class Watcher(PatternMatchingEventHandler):
         for (i, (n, o)) in enumerate(zip(n2, o2)):
             if first is None and n != o:
                 first = i
-        return '\n'.join(n2[first:]) + '\n'
+        return normalizeText('\n'.join(n2[first:]) + '\n')
     def on_created(self, evt):
         pass
     def on_deleted(self, evt):
