@@ -22,7 +22,7 @@ class Watcher(PatternMatchingEventHandler):
             f.write(normalizeText(text))
     def on_modified(self, evt):
         x = self.target.read_text()
-        y = self.subText(x, self.lastText)
+        y = subText(x, self.lastText)
         if y == '' or y == '\n':
             print('no changes', file=sys.stderr)
             return None
@@ -57,24 +57,21 @@ class Watcher(PatternMatchingEventHandler):
         print(sout, end='', flush=True)
         print(serr, file=sys.stderr, end='', flush=True)
         return (sout, serr)
-    def subText(self, newer, older):
-        # 最終行の改行
-        n1 = normalizeText(newer)
-        o1 = normalizeText(older)
-        if n1 == o1:
-            return ''
-        # padding
-        n2 = n1.split('\n') + [''] * (len(o1) - len(n1))
-        o2 = o1.split('\n') + [''] * (len(n1) - len(o1))
-        first = None
-        for (i, (n, o)) in enumerate(zip(n2, o2)):
-            if first is None and n != o:
-                first = i
-        return normalizeText('\n'.join(n2[first:]) + '\n')
-    def on_created(self, evt):
-        pass
-    def on_deleted(self, evt):
-        pass
+
+def subText(newer, older):
+    # 最終行の改行
+    n1 = normalizeText(newer)
+    o1 = normalizeText(older)
+    if n1 == o1:
+        return ''
+    # padding
+    n2 = n1.split('\n') + [''] * (len(o1) - len(n1))
+    o2 = o1.split('\n') + [''] * (len(n1) - len(o1))
+    first = None
+    for (i, (n, o)) in enumerate(zip(n2, o2)):
+        if first is None and n != o:
+            first = i
+    return normalizeText('\n'.join(n2[first:]) + '\n')
 
 def normalizeText(text, c=''):
     if text == '':

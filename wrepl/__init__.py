@@ -48,7 +48,8 @@ def main(args) -> int:
         print('filetype not supported', file=sys.stderr)
         return 1
     finally:
-        lock.unlink()
+        if lock.exists():
+            lock.unlink()
 
 def run(ft, target, last, exed, sess):
     handler = Watcher(ft, target, last, exed, sess)
