@@ -25,3 +25,4 @@ Older changes is discarded.
 ## TODO
 
 * stdout, stderrをリアルタイムにprintする
+* nodeやrubyに対応
