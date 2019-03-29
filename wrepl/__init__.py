@@ -18,6 +18,13 @@ filetype = [
             'saver': lambda f: 'import dill\ndill.dump_session("{}");\n'.format(f),
             'loader': lambda f: 'import dill\nfrom pathlib import Path\nif Path("{name}").is_file():dill.load_session("{name}");\n'.format(name=f)})]
 
+def parse() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', metavar='file', type=str, nargs=1,
+            help="watcing this")
+    args = parser.parse_args()
+    return main(args)
+
 def main(args) -> int:
     target = Path(args.file[0])
     if not target.is_file():
@@ -135,8 +142,4 @@ def run(ft, target, last, exed, sess):
         time.sleep(10)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file', metavar='file', type=str, nargs=1,
-            help="watcing this")
-    args = parser.parse_args()
-    exit(main(args))
+    exit(parse())

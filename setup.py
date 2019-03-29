@@ -13,4 +13,4 @@ setup(
         classifiers=[
             'Development Status :: 3 - Alpha'],
         packages=find_packages(exclude=('tests')),
-        entry_points={'console_scripts': ['wrepl=wrepl.__init__:main']})
+        entry_points={'console_scripts': ['wrepl=wrepl.__init__:parse']})
