@@ -31,4 +31,3 @@ Older changes is discarded.
 
 * stdout, stderrをリアルタイムにprintする
 * nodeやrubyに対応
-* 変更queueがないときにC-cすると正常終了するように

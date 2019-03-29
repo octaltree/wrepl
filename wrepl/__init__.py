@@ -43,8 +43,7 @@ def main(args) -> int:
     try:
         for (k, v) in filetype:
             if target.suffix == v['suffix']:
-                run(v, target, last, exed, sess)
-                return 0
+                return run(v, target, last, exed, sess)
         print('filetype not supported', file=sys.stderr)
         return 1
     finally:
@@ -56,8 +55,11 @@ def run(ft, target, last, exed, sess):
     observer = Observer()
     observer.schedule(handler, str(target.parent), recursive=False)
     observer.start()
-    while True:
-        time.sleep(10)
+    try:
+        while True:
+            time.sleep(10)
+    except KeyboardInterrupt:
+        return 1
 
 if __name__ == "__main__":
     exit(parse())
