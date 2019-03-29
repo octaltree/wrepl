@@ -14,8 +14,13 @@ pip install wrepl
 Watch with `wrepl foo.py`, edit foo.py.
 
 ## Files
+It creates `foo.py.wrepl/` in executed dir for logging.
+- foo.py.wrepl/last
+  * latest executed version of foo.py
 - foo.py.wrepl/executed
   * whole of snippets evaled
+- foo.py.wrepl/session
+  * global vars persistence
 
 ## Keeping in mind
 
