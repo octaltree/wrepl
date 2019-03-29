@@ -74,6 +74,7 @@ class Watcher(PatternMatchingEventHandler):
         self.exed.write_text(text)
     def on_modified(self, evt):
         self.que += [self.target.read_text()]
+        print('rest queue count: {}'.format(len(self.que)), file=sys.stderr)
         if self.processing:
             return
         self.processing = True
@@ -81,7 +82,6 @@ class Watcher(PatternMatchingEventHandler):
         self.processing = False
     def process(self):
         while len(self.que) > 0:
-            print('rest queue count: {}'.format(len(self.que)), file=sys.stderr)
             x = self.que.pop(0)
             y = self.subText(x, self.lastText)
             if y == '':
