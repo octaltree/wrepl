@@ -8,14 +8,14 @@ Since `wrepl` watchs file change, you can use your favorite text editor (nvim, v
 
 Watch with `wrepl foo.py`, edit foo.py.
 
+## Files
+- foo.py.wrepl/executed
+  * whole of snippets evaled
+
 ## Keeping in mind
 
 If target file is changed multi times while running snippet, only newest change is running.
 Older changes is discarded.
-
-## Files
-- foo.py.wrepl/executed
-  * whole of snippets evaled
 
 ## TODO
 
