@@ -1,3 +1,4 @@
+import re
 import sys
 import subprocess
 from pathlib import Path
@@ -71,6 +72,17 @@ def subText(newer, older):
     for (i, (n, o)) in enumerate(zip(n2, o2)):
         if first is None and n != o:
             first = i
+    if re.match('^[\s]+', n2[first]): # ネストされてたら遡る
+        indent = len(re.match('^([\s]+)', n2[first]).group(1))
+        tf = first
+        for (i, r) in enumerate(reversed(n2[:first+1])):
+            tf = first - i
+            if re.match('^[\s]*$', r):
+                continue
+            mat = re.match('^([\s]*)[^\s]', r)
+            if mat and len(mat.group(1)) < indent:
+                break
+        first = tf
     return normalizeText('\n'.join(n2[first:]) + '\n')
 
 def normalizeText(text, c=''):
