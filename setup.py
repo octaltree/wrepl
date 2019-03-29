@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name='wrepl',
-        version="0.0.11",
+        version="0.0.12",
         description="Watch-Read-Eval-Print Loop",
         url='https://github.com/octaltree/wrepl',
         author='octaltree',
