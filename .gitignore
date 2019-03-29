@@ -5,3 +5,6 @@ __pycache__
 .nfs*
 .ropeproject
 ve/
+build/
+dist/
+wrepl.egg-info/
