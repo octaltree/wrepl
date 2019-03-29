@@ -65,9 +65,8 @@ class Watcher(PatternMatchingEventHandler):
         self.lastText = text
         self.last.write_text(text)
     def appendExed(self, text):
-        raw = self.exed.read_text()
-        newText = raw + normalizeText(text)
-        self.exed.write_text(newText)
+        with open(self.exed, 'a+') as f:
+            f.write(normalizeText(text))
     def on_modified(self, evt):
         x = self.target.read_text()
         y = self.subText(x, self.lastText)
