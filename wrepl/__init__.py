@@ -64,22 +64,31 @@ class Watcher(PatternMatchingEventHandler):
     def setLast(self, text):
         self.lastText = text
         self.last.write_text(text)
-    def appendExed(self, sin, sout, serr):
+    def appendExed(self, text):
         raw = self.exed.read_text()
-        text = (raw + normalizeText(sin, '')
-                + normalizeText(sout, '{}1 '.format(self.ft['comment']))
-                + normalizeText(serr, '{}2 '.format(self.ft['comment'])))
-        self.exed.write_text(text)
+        newText = raw + normalizeText(text)
+        self.exed.write_text(newText)
     def on_modified(self, evt):
         x = self.target.read_text()
-        label = (self.ft['comment'] + ' ' +
-                datetime.utcnow().isoformat(timespec='seconds') + 'Z')
-        print(label)
         y = self.subText(x, self.lastText)
         if y == '' or y == '\n':
-            print('no diff', file=sys.stderr)
-            return
-        print(y, end='', flush=True)
+            print('no changes', file=sys.stderr)
+            return None
+        print(normalizeText(y, '> '), end='', flush=True)
+        label = lambda utc, memo: ' '.join([
+            self.ft['comment'], memo, utc.isoformat(timespec='seconds') + 'Z']) + '\n'
+        startLabel = label(datetime.utcnow(), 'start')
+        print(startLabel, end='')
+        (sout, serr) = self.run(y)
+        finishLabel = label(datetime.utcnow(), 'finish')
+        print(finishLabel, end='')
+        text = (y + normalizeText(startLabel) +
+                normalizeText(sout, '{}1 '.format(self.ft['comment'])) +
+                normalizeText(serr, '{}2 '.format(self.ft['comment'])) +
+                normalizeText(finishLabel))
+        self.appendExed(text)
+        self.setLast(x)
+    def run(self, y):
         script = normalizeText('\n'.join([
             self.ft['loader'](str(self.sess)), y,
             self.ft['saver'](str(self.sess))]))
@@ -95,9 +104,7 @@ class Watcher(PatternMatchingEventHandler):
         serr = repl.stderr.read().decode('utf-8')
         print(sout, end='', flush=True)
         print(serr, file=sys.stderr, end='', flush=True)
-        # ログ
-        self.appendExed('\n'.join([label, y]), sout, serr)
-        self.setLast(x)
+        return (sout, serr)
     def subText(self, newer, older):
         # 最終行の改行
         n1 = normalizeText(newer)
