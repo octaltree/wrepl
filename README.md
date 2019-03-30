@@ -4,6 +4,8 @@ Watch-Read-Eval-Print Loop<br>
 `wrepl` is REPL wrapper. Since `wrepl` watchs file change, you can use your favorite text editor (nvim, vim, vi, etc.).
 `wrepl` saves and restores global vars with [uqfoundation/dill](https://github.com/uqfoundation/dill), it is able to eval only changes.
 
+<small>[日本語版](https://qiita.com/octaltree/items/ea2ed58ffc740c622b6b)</small>
+
 ## Install
 ```
 pip install wrepl
