@@ -29,5 +29,6 @@ Older changes is discarded.
 
 ## TODO
 
+* on_modifiedが肥大化してるので副作用切り離してテスト
 * stdout, stderrをリアルタイムにprintする
 * nodeやrubyに対応
