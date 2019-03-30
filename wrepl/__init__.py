@@ -28,6 +28,8 @@ def main(args) -> int:
     if target.is_dir():
         print('{} not found'.format(target), file=sys.stderr)
         return 1
+    elif not target.exists():
+        target.touch()
     dn = Path(target.name + '.wrepl')
     dn.mkdir(exist_ok=True)
     sess = dn / 'session'
@@ -37,7 +39,6 @@ def main(args) -> int:
     if lock.exists():
         print('{} is locked. check other process'.format(dn), file=sys.stderr)
         return 1
-    target.touch()
     exed.touch()
     last.touch()
     lock.touch()
