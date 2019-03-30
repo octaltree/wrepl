@@ -73,14 +73,10 @@ def subText(newer, older):
         if first is None and n != o:
             first = i
     if re.match('^[\s]+', n2[first]): # ネストされてたら遡る
-        indent = len(re.match('^([\s]+)', n2[first]).group(1))
         tf = first
         for (i, r) in enumerate(reversed(n2[:first+1])):
             tf = first - i
-            if re.match('^[\s]*$', r):
-                continue
-            mat = re.match('^([\s]*)[^\s]', r)
-            if mat and len(mat.group(1)) < indent:
+            if re.match('^[^\s]', r):
                 break
         first = tf
     return normalizeText('\n'.join(n2[first:]) + '\n')
