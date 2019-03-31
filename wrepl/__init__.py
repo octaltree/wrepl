@@ -20,6 +20,8 @@ def parse() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('file', metavar='file', type=str, nargs=1,
             help="watcing this")
+    parser.add_argument('--filetype', metavar='filetype', type=str, nargs=1,
+            help="only python3 is supported now")
     args = parser.parse_args()
     return main(args)
 
@@ -43,9 +45,11 @@ def main(args) -> int:
     last.touch()
     lock.touch()
     try:
-        for (k, v) in filetype:
-            if target.suffix == v['suffix']:
-                return run(v, target, last, exed, sess)
+        ft1 = [v for (k, v) in filetype if args.filetype[0] == k] if args.filetype else []
+        ft2 = [v for (k, v) in filetype if target.suffix == v['suffix']]
+        ft = ft1 + ft2
+        if len(ft) > 0:
+            return run(ft[0], target, last, exed, sess)
         print('filetype not supported', file=sys.stderr)
         return 1
     finally:
