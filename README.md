@@ -31,6 +31,7 @@ Older changes is discarded.
 
 ## TODO
 
+* preload
 * on_modifiedが肥大化してるので副作用切り離してテスト
 * stdout, stderrをリアルタイムにprintする
 * nodeやrubyに対応
