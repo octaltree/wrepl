@@ -5,8 +5,7 @@ import time
 import argparse
 from pathlib import Path
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
-from .watcher import Watcher
+from .watcher import Watcher, normalizeText
 
 filetype = [
         ('python3', {
@@ -60,6 +59,7 @@ def run(ft, target, last, exed, sess):
     handler = Watcher(ft, target, last, exed, sess)
     observer = Observer()
     observer.schedule(handler, str(target.parent), recursive=False)
+    print(normalizeText(Path(last).read_text(), '> '), end='', flush=True)
     observer.start()
     try:
         while True:
