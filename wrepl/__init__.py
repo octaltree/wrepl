@@ -59,7 +59,7 @@ def run(ft, target, last, exed, sess):
     handler = Watcher(ft, target, last, exed, sess)
     observer = Observer()
     observer.schedule(handler, str(target.parent), recursive=False)
-    print(normalizeText(Path(last).read_text(), '> '), end='', flush=True)
+    print(normalizeText(Path(exed).read_text(), '> '), end='', flush=True)
     observer.start()
     try:
         while True:
