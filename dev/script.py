@@ -9,7 +9,7 @@ class Script:
         self.raw = raw
         self.ast = ast.parse(raw, filename=fileName)
 
-    @getter(False)
+    @getter
     def cells(self):
         def extract(raw, current, next):
             cli = current.lineno - 1
@@ -46,7 +46,7 @@ class Differ:
         self.before = before
         self.after = after
 
-    @getter(False)
+    @getter
     def numSameStmts(self):
         stmts = ([c.stmt for c in self.before.cells], [c.stmt for c in self.after.cells])
         num = 0

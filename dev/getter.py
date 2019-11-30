@@ -1,18 +1,13 @@
-from copy import deepcopy
-
-def getter(copy):
-    def decorator(f):
-        def res(self, *args, **kwargs):
-            name = f.__name__
-            try:
-                tmp =  getattr(self, '_' + name)
-                return deepcopy(tmp) if copy else tmp
-            except AttributeError:
-                val = f(self, *args, **kwargs)
-                setattr(self, '_' + name, val)
-                return val
-        return property(res)
-    return decorator
+def getter(f):
+    def res(self, *args, **kwargs):
+        name = f.__name__
+        try:
+            return getattr(self, '_' + name)
+        except AttributeError:
+            val = f(self, *args, **kwargs)
+            setattr(self, '_' + name, val)
+            return val
+    return property(res)
 
 if __name__ == '__main__':
     from time import sleep
@@ -21,7 +16,7 @@ if __name__ == '__main__':
         def __init__(self):
             pass
 
-        @getter(True)
+        @getter
         def asdf(self):
             sleep(1)
             return 3
