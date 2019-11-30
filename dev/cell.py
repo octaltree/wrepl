@@ -1,6 +1,7 @@
 import symtable
 from collections import deque
 from getter import getter
+import ast
 
 class Cell:
     def __init__(self, fileName, raw, stmt):
@@ -44,8 +45,32 @@ class Cell:
     def __repr__(self):
         return '<Cell "{}">'.format(self.raw)
 
+    def equalAst(self, cell):
+        return _equal(self.stmt, cell.stmt)
+
+def _equal(na, nb):
+    if type(na) is not type(nb): return False
+    if isinstance(na, list):
+        if len(na) != len(nb): return False
+        for i in range(len(na)):
+            if not _equal(na[i], nb[i]):
+                return False
+        return True
+    if not isinstance(na, ast.AST): return na == nb
+    # only AST
+    if set(na._fields) != set(nb._fields): return False
+    for fn in na._fields:
+        va = getattr(na, fn)
+        vb = getattr(nb, fn)
+        if _equal(va, vb): continue
+        return False
+    return True
+
 
 if __name__ == '__main__':
+    assert _equal(ast.parse('3\n2'), ast.parse('3;2'))
+    assert not _equal(ast.parse('b = 3'), ast.parse('a = 3'))
+    assert not _equal(ast.parse('a = [1,3]\na'), ast.parse('a= [2,3]; a'))
     from script import Script
     from pathlib import Path
     for c in Script('example.py', Path('example.py').read_text()).cells:

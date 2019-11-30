@@ -23,24 +23,6 @@ class Script:
                 Cell(self.fileName, extract(self.raw, c, n), c)
                 for (c, n) in zip_longest(self.ast.body, self.ast.body[1:])]
 
-def _equal(na, nb):
-    if type(na) is not type(nb): return False
-    if isinstance(na, list):
-        if len(na) != len(nb): return False
-        for i in range(len(na)):
-            if not _equal(na[i], nb[i]):
-                return False
-        return True
-    if not isinstance(na, ast.AST): return na == nb
-    # only AST
-    if set(na._fields) != set(nb._fields): return False
-    for fn in na._fields:
-        va = getattr(na, fn)
-        vb = getattr(nb, fn)
-        if _equal(va, vb): continue
-        return False
-    return True
-
 class Differ:
     def __init__(self, before, after):
         self.before = before
@@ -48,20 +30,19 @@ class Differ:
 
     @getter
     def numSameStmts(self):
-        stmts = ([c.stmt for c in self.before.cells], [c.stmt for c in self.after.cells])
+        stmts = ([c for c in self.before.cells], [c for c in self.after.cells])
         num = 0
         for (p, n) in zip_longest(*stmts):
-            if not _equal(p, n): break
+            if not p.equalAst(n): break
             num += 1
         return num
 
+    @property
     def deleted(self):
         return self.before.cells[self.numSameStmts:]
+    @property
     def added(self):
         return self.after.cells[self.numSameStmts:]
 
 if __name__ == '__main__':
-    assert _equal(ast.parse('3\n2'), ast.parse('3;2'))
-    assert not _equal(ast.parse('b = 3'), ast.parse('a = 3'))
-    assert not _equal(ast.parse('a = [1,3]\na'), ast.parse('a= [2,3]; a'))
-    print(Differ(Script('foo', 'a = [1,3]\na'), Script('foo', 'a=[2,3]; a')).added())
+    print(Differ(Script('foo', 'a = [2,3]\nb'), Script('foo', 'a=[2,3]; a')).deleted)
