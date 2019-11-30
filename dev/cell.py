@@ -1,4 +1,5 @@
 import symtable
+from collections import deque
 
 class Symbol:
     def __init__(self, **kwargs):
@@ -13,24 +14,35 @@ class Cell:
         self.stmt = stmt
         self.table = symtable.symtable(raw, filename=fileName, compile_type='exec')
 
+    def _rec(self, root):
+        ts = deque(root.get_children())
+        res = []
+        while len(ts) > 0:
+            t = ts.popleft()
+            for c in t.get_children(): ts.append(c)
+            res += t.get_symbols()
+        return res
+
     def needs(self): # 読み込む必要
+        ss = [s for s in self.table.get_symbols()] + [s
+                for s in self._rec(self.table)
+                if s.is_global() or s.is_declared_global()]
+        return [s.get_name() for s in ss
+                if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
+
+    def imported(self):
         pass
 
-    def used(self): # 保存される必要
+    def changed(self):
         pass
 
     def __repr__(self):
         return '<Cell "{}">'.format(self.raw)
 
 
-
-def symbolsNeedLoading(stmt, symtable):
-    res = []
-    symtable.get_symbols()
-    pass
-
-def symbolsNeedSaving(stmt, symtable):
-    pass
-
 if __name__ == '__main__':
-    pass
+    from exast import Code
+    from pathlib import Path
+    for c in Code('example.py', Path('example.py').read_text()).cells():
+        print(c.raw)
+        print(c.needs())

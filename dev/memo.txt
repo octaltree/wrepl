@@ -22,3 +22,5 @@ symtableモジュールでグローバル変数への依存を解析する。
 type moduleなテーブルのシンボルでlocalがtrue
 あるいは
 その他テーブルの(declared_globalがtrue あるいは globalがtrue)
+
+1文ずつsymtableすると結果が変わるのでこのルールは使えない
