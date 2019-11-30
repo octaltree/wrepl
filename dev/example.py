@@ -13,6 +13,7 @@ l
 stdin
 reader
 def main(u):
+    global stderr
     from sys import stderr
     global a
     global g
