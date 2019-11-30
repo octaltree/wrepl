@@ -1,6 +1,8 @@
 import sys
 from sys import stdin
 from sys import stdout as out
+from csv import *
+
 a = 0
 c = 2
 c = 3
@@ -9,10 +11,12 @@ w
 l = 3
 l
 stdin
+reader
 def main(u):
     from sys import stderr
     global a
     global g
+    writer
     l = 3
     l += 2
     del l
