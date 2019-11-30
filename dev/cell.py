@@ -1,5 +1,6 @@
 import symtable
 from collections import deque
+from getter import getter
 
 class Cell:
     def __init__(self, fileName, raw, stmt):
@@ -16,23 +17,27 @@ class Cell:
             res += t.get_symbols()
         return res
 
+    @getter(True)
     def _global(self):
         return [s for s in self.table.get_symbols()] + [s
                 for s in self._rec(self.table)
                 if s.is_global() or s.is_declared_global()]
 
+    @getter(True)
     def needs(self): # 読み込む必要
-        ss = self._global()
+        ss = self._global
         return [s.get_name() for s in ss
                 if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
 
+    @getter(True)
     def imported(self): # この文でimportされるシンボル 保存する必要なし
-        ss = self._global()
+        ss = self._global
         return [s.get_name() for s in ss if s.is_imported()]
 
 
+    @getter(True)
     def changed(self): # 保存する必要あり
-        ss = self._global()
+        ss = self._global
         return [s.get_name() for s in ss
                 if s.is_referenced() or s.is_assigned()]
 
@@ -41,8 +46,8 @@ class Cell:
 
 
 if __name__ == '__main__':
-    from exast import Code
+    from script import Script
     from pathlib import Path
-    for c in Code('example.py', Path('example.py').read_text()).cells():
+    for c in Script('example.py', Path('example.py').read_text()).cells:
         print(c.raw)
-        print(c.changed())
+        print(c.changed)

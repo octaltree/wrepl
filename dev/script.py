@@ -1,6 +1,7 @@
 import ast
 from itertools import zip_longest
 from cell import Cell
+from getter import getter
 
 def equal(na, nb):
     if type(na) is not type(nb): return False
@@ -20,11 +21,13 @@ def equal(na, nb):
         return False
     return True
 
-class Code:
+class Script:
     def __init__(self, fileName, raw):
         self.fileName = fileName
         self.raw = raw
         self.ast = ast.parse(raw, filename=fileName)
+
+    @getter(False)
     def cells(self):
         def extract(raw, current, next):
             cli = current.lineno - 1
@@ -34,7 +37,7 @@ class Code:
             lines = off.splitlines()
             s = '\n'.join(lines[:nli]) + '\n' + lines[nli][:next.col_offset]
             return s.strip()
-        return [
+        return  [
                 Cell(self.fileName, extract(self.raw, c, n), c)
                 for (c, n) in zip_longest(self.ast.body, self.ast.body[1:])]
 
@@ -42,23 +45,23 @@ class Differ:
     def __init__(self, before, after):
         self.before = before
         self.after = after
-    _countSameStmts = None
-    def countSameStmts(self):
-        if self._countSameStmts is not None: return self._countSameStmts
-        stmts = ([c.stmt for c in self.before], [c.stmt for c in self.after])
+
+    @getter(False)
+    def numSameStmts(self):
+        stmts = ([c.stmt for c in self.before.cells], [c.stmt for c in self.after.cells])
         num = 0
         for (p, n) in zip_longest(*stmts):
             if not equal(p, n): break
             num += 1
-        self._countSameStmts = num
-        return self._countSameStmts
+        return num
+
     def deleted(self):
-        return self.before[self.countSameStmts():]
+        return self.before.cells[self.numSameStmts:]
     def added(self):
-        return self.after[self.countSameStmts():]
+        return self.after.cells[self.numSameStmts:]
 
 if __name__ == '__main__':
     assert equal(ast.parse('3\n2'), ast.parse('3;2'))
     assert not equal(ast.parse('b = 3'), ast.parse('a = 3'))
     assert not equal(ast.parse('a = [1,3]\na'), ast.parse('a= [2,3]; a'))
-    print(Differ(Code('foo', 'a = [1,3]\na').cells(), Code('foo', 'a=[2,3]; a').cells()).added())
+    print(Differ(Script('foo', 'a = [1,3]\na'), Script('foo', 'a=[2,3]; a')).added())
