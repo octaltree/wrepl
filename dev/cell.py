@@ -1,13 +1,6 @@
 import symtable
 from collections import deque
 
-class Symbol:
-    def __init__(self, **kwargs):
-        for (k, v) in kwargs.items():
-            setattr(self, k, v)
-    name = ''
-    imported = False
-
 class Cell:
     def __init__(self, fileName, raw, stmt):
         self.raw = raw
