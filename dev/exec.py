@@ -3,39 +3,43 @@ from script import Script
 import time
 import json
 
-class Exec:
-    def __init__(self, store, script):
-        self.store = store
-        self.script = script
+def _stamp():
+    return str(int(time.time()))
 
-    @getter
+class Exec:
+    def __init__(self, store):
+        self.store = store
+
     def base(self):
         loaded = [t
                 for t in (
                     (s, s.tryLoadScript())
                     for s in self.store.scripts())
                 if t[1]]
-        if len(loaded) == 0: return {'base': None, 'num': 0}
+        if len(loaded) == 0: return (None, 0)
         return max(
-                [{'base': t[0], 'num': self.script.countSameStmts(t[1])}
+                [(t[0], self.script.countSameStmts(t[1]))
                     for t in loaded],
-                key=lambda o: o['num'])
+                key=lambda t: t[1])
 
-    @getter
     def dist(self):
-        return StoredScript(self.store, str(time.time())).setBase(self.base)
+        return StoredScript(self.store, _stamp()).setBase(*self.base())
+
+    def feed(self, script):
+        self.script = script
+        stored = self.dist()
 
 class Store:
     def __init__(self, fileName, dist):
         self.fileName = fileName
         self.dist = dist
-        self.dist.mkdir(exists_ok=True)
+        self.dist.mkdir(exist_ok=True, parents=True)
 
     def scripts(self):
         dist = self.dist / 'scripts'
-        dist.mkdir(exists_ok=True)
+        dist.mkdir(exist_ok=True, parents=True)
         ds = (d for d in dist.iterdir() if d.is_dir())
-        return [StoredScript(store, d.name) for d in ds]
+        return [StoredScript(self, d.name) for d in ds]
 
 
 class StoredScript:
@@ -43,12 +47,12 @@ class StoredScript:
         self.store = store
         self.name = name
         self.dist = store.dist / 'scripts' / name
-        self.dist.mkdir(exists_ok=True)
+        self.dist.mkdir(exist_ok=True, parents=True)
 
     base = None
     def setBase(self, storedScript, num):
         text = json.dumps({
-            'name': storedScript.name if storedScript else ''
+            'name': storedScript.name if storedScript else '',
             'num': num})
         (self.dist / 'base').write_text(text)
         self.base = {'base': storedScript, 'num': num}
@@ -69,7 +73,7 @@ class StoredScript:
             baseScript = self.base['base'].tryLoadScript(self.base['num'])
             if not baseScript: return None
         dist = self.dist / 'stmts'
-        dist.mkdir(exists_ok=True)
+        dist.mkdir(exist_ok=True, parents=True)
         ds = sorted((d for d in dist.iterdir() if d.is_dir()), key=lambda d: d.name)
         limit = len(ds) if n == -1 else n - self.base['num']
         ts = ((d / 'raw').read_text() for d in ds[:limit])
@@ -79,4 +83,5 @@ class StoredScript:
                 '\n'.join(ts))
 
 if __name__ == '__main__':
-    pass
+    e = Exec(Store('example.py', Path('.example.py.d')))
+    e.feed(Script('example.py', Path('example.py').read_text()))
