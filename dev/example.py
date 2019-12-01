@@ -45,12 +45,19 @@ def main(u):
     q
     c
 
+@asdf
+def asdfno():
+    pass
 
 class Foo(object):
     w = null
     class Bar:
         pass
     def asdf():
-        pass
+        global a
+        print(a)
 
 main(2)
+
+foo = Foo()
+foo.asdf()

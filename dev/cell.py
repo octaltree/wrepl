@@ -9,37 +9,63 @@ class Cell:
         self.stmt = stmt
         self.table = symtable.symtable(raw, filename=fileName, compile_type='exec')
 
-    def _rec(self, root):
-        ts = deque(root.get_children())
-        res = []
+    @getter
+    def isLazy(self):
+        return any([isinstance(self.stmt, t)
+            for t in [ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]])
+
+    @getter
+    def _symbols(self):
+        return self.table.get_symbols()
+
+    @getter
+    def _symbolsRecursively(self):
+        ts = deque(self.table.get_children())
+        ss = []
         while len(ts) > 0:
             t = ts.popleft()
             for c in t.get_children(): ts.append(c)
-            res += t.get_symbols()
-        return res
+            ss += t.get_symbols()
+        return [s for s in ss if s.is_global() or s.is_declared_global()]
 
     @getter
-    def _global(self):
-        return [s for s in self.table.get_symbols()] + [s
-                for s in self._rec(self.table)
-                if s.is_global() or s.is_declared_global()]
-
-    @getter
-    def needs(self): # 読み込む必要
-        ss = self._global
-        return [s.get_name() for s in ss
+    def needs(self): # この文のために読み込む必要
+        if self.isLazy:
+            return [s.get_name() for s in self._symbols if s.is_referenced()]
+        return [s.get_name() for s in self._symbols + self._symbolsRecursively
                 if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
 
     @getter
-    def imported(self): # この文でimportされるシンボル 保存する必要なし
-        ss = self._global
-        return [s.get_name() for s in ss if s.is_imported()]
-
+    def imported(self):
+        # この文がimportするシンボル 保存じゃなく実行する必要
+        # ただしchangedに含まれ保存されてたらそっち優先
+        if self.isLazy: return []
+        return [s.get_name() for s in self._symbols + self._symbolsRecursively
+                if s.is_imported()]
 
     @getter
-    def changed(self): # 保存する必要あり
-        ss = self._global
-        return [s.get_name() for s in ss
+    def changed(self):
+        if self.isLazy:
+            return [s.get_name() for s in self._symbols
+                    if s.is_referenced() or s.is_assigned()]
+        return [s.get_name() for s in self._symbols + self._symbolsRecursively
+                if s.is_referenced() or s.is_assigned()]
+
+    @getter
+    def willNeeds(self):
+        if not self.isLazy: return []
+        return [s.get_name() for s in self._symbolsRecursively
+                if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
+
+    @getter
+    def willImported(self):
+        if not self.isLazy: return []
+        return [s.get_name() for s in self._symbolsRecursively if s.is_imported()]
+
+    @getter
+    def willChanged(self):
+        if not self.isLazy: return []
+        return [s.get_name() for s in self._symbolsRecursively
                 if s.is_referenced() or s.is_assigned()]
 
     def __repr__(self):
@@ -75,4 +101,4 @@ if __name__ == '__main__':
     from pathlib import Path
     for c in Script('example.py', Path('example.py').read_text()).cells:
         print(c.raw)
-        print((c.needs, c.imported, c.changed))
+        print((c.needs, c.imported, c.changed, c.willNeeds, c.willImported, c.willChanged))
