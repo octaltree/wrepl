@@ -22,6 +22,28 @@ class Plan:
     def added(self):
         return self.after.cells[self.numSameStmts:]
 
+    def plan(self):
+        execed = self.before.cells[:self.numSameStmts]
+        added = self.after.cells[self.numSameStmts:]
+        pass
+
+class Operation:
+    pass
+
+class Storage(Operation):
+    def __init__(self, name):
+        self.name = name
+
+class Load(Storage):
+    pass
+
+class Save(Storage):
+    pass
+
+class Run(Operation):
+    def __init__(self, cell):
+        pass
+
 if __name__ == '__main__':
     from script import Script
     print(Plan(Script('foo', 'a = [2,3]\nb'), Script('foo', 'a=[2,3]; a')).deleted)

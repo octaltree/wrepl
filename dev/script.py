@@ -22,3 +22,11 @@ class Script:
         return  [
                 Cell(self.fileName, extract(self.raw, c, n), c)
                 for (c, n) in zip_longest(self.ast.body, self.ast.body[1:])]
+
+    def countSameStmts(self, s):
+        cs = (self.cells, s.cells)
+        num = 0
+        for (p, n) in zip_longest(*cs):
+            if not p.equalAst(n): break
+            num += 1
+        return num

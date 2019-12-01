@@ -24,3 +24,8 @@ type moduleなテーブルのシンボルでlocalがtrue
 その他テーブルの(declared_globalがtrue あるいは globalがtrue)
 
 1文ずつsymtableすると結果が変わるのでこのルールは使えない
+だがcell.py実装終えた
+
+## 実行計画
+addedについて1文ずつ実行する
+この際
