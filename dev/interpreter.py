@@ -51,4 +51,6 @@ class Interpreter:
 #        self
 
 if __name__ == '__main__':
-    pass
+    p = Path('example.py')
+    interpreter = Interpreter(Store(p))
+    interpreter.feed(Script.read(p))

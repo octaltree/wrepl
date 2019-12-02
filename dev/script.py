@@ -9,6 +9,9 @@ class Script:
         self.raw = raw
         self.ast = ast.parse(raw, filename=fileName)
 
+    def read(path):
+        return Script(path.name, path.read_text())
+
     @getter
     def cells(self):
         def extract(raw, current, next):
@@ -27,6 +30,7 @@ class Script:
         cs = (self.cells, s.cells)
         num = 0
         for (p, n) in zip_longest(*cs):
+            if not p: break
             if not p.equalAst(n): break
             num += 1
         return num
