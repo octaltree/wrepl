@@ -30,3 +30,11 @@ class Script:
             if not p.equalAst(n): break
             num += 1
         return num
+
+    def after(self, s):
+        n = self.countSameStmts(s)
+        return (self.cells[:n], self.cells[n:], s.cells[n:])
+
+    def addCells(self, cs):
+        self._cells += cs
+        return self
