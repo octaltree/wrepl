@@ -36,20 +36,12 @@ class Cell:
                 if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
 
     @getter
-    def imported(self):
-        # この文がimportするシンボル 保存じゃなく実行する必要
-        # ただしchangedに含まれ保存されてたらそっち優先
-        if self.isLazy: return []
-        return [s.get_name() for s in self._symbols + self._symbolsRecursively
-                if s.is_imported()]
-
-    @getter
     def changed(self):
         if self.isLazy:
             return [s.get_name() for s in self._symbols
-                    if s.is_referenced() or s.is_assigned()]
+                    if s.is_referenced() or s.is_assigned() or s.is_imported()]
         return [s.get_name() for s in self._symbols + self._symbolsRecursively
-                if s.is_referenced() or s.is_assigned()]
+                if s.is_referenced() or s.is_assigned() or s.is_imported()]
 
     @getter
     def willNeeded(self):
@@ -58,15 +50,10 @@ class Cell:
                 if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
 
     @getter
-    def willImported(self):
-        if not self.isLazy: return []
-        return [s.get_name() for s in self._symbolsRecursively if s.is_imported()]
-
-    @getter
     def willChanged(self):
         if not self.isLazy: return []
         return [s.get_name() for s in self._symbolsRecursively
-                if s.is_referenced() or s.is_assigned()]
+                if s.is_referenced() or s.is_assigned() or s.is_imported()]
 
     def __repr__(self):
         return '<Cell "{}">'.format(self.raw)
@@ -101,4 +88,4 @@ if __name__ == '__main__':
     from pathlib import Path
     for c in Script('example.py', Path('example.py').read_text()).cells:
         print(c.raw)
-        print((c.needed, c.imported, c.changed, c.willNeeded, c.willImported, c.willChanged))
+        print((c.needed, c.changed, c.willNeeded, c.willChanged))

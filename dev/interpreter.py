@@ -80,7 +80,7 @@ class Interpreter:
 
     def _prepare(self, same, cell):
         pre = list(reversed(list(enumerate(same))))
-        def rec(ts, c): # -> [('exec'|'load', idx)]
+        def rec(ts, c): # -> [idx]
             # ヒットしなかったら返す
             pass
         load = rec(pre, cell)
