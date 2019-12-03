@@ -31,3 +31,17 @@ addedについて1文ずつ実行する
 この際
 
 メモリに読み込んであるものを一々保存読み込みするのは無駄
+
+* 保存されたScript
+* インタプリタで実行された[Cell]
+* 最新のScript
+保存されたと最新のを比較して(same :: [Cell], deleted, added)が得られる。
+sameのうち必要なCellをメモリに読み込みaddedを実行
+その際deletedで上書きされた変数があればインタプリタをrefresh
+最新のscriptを保存されたScriptとする
+
+* 保存された[Cell]
+* 実行済みでリフレッシュするしかない[Cell]
+* 最新の[Cell]
+3通りの(same :: [Cell], deleted, added)が得られる
+どういう場合にリフレッシュするか

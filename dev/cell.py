@@ -29,7 +29,7 @@ class Cell:
         return [s for s in ss if s.is_global() or s.is_declared_global()]
 
     @getter
-    def needs(self): # この文のために読み込む必要
+    def needed(self): # この文のために読み込む必要
         if self.isLazy:
             return [s.get_name() for s in self._symbols if s.is_referenced()]
         return [s.get_name() for s in self._symbols + self._symbolsRecursively
@@ -52,7 +52,7 @@ class Cell:
                 if s.is_referenced() or s.is_assigned()]
 
     @getter
-    def willNeeds(self):
+    def willNeeded(self):
         if not self.isLazy: return []
         return [s.get_name() for s in self._symbolsRecursively
                 if (s.is_referenced() or s.is_assigned()) and not s.is_imported()]
@@ -101,4 +101,4 @@ if __name__ == '__main__':
     from pathlib import Path
     for c in Script('example.py', Path('example.py').read_text()).cells:
         print(c.raw)
-        print((c.needs, c.imported, c.changed, c.willNeeds, c.willImported, c.willChanged))
+        print((c.needed, c.imported, c.changed, c.willNeeded, c.willImported, c.willChanged))

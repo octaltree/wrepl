@@ -12,6 +12,9 @@ class Script:
     def read(path):
         return Script(path.name, path.read_text())
 
+    def composeWith(fileName, cells):
+        return Script(fileName, '\n'.join((c.raw for c in cells)))
+
     @getter
     def cells(self):
         def extract(raw, current, next):

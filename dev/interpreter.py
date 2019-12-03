@@ -5,6 +5,7 @@ import time
 import json
 import dill
 from getter import getter
+from shutil import rmtree
 
 def _stamp():
     return str(int(time.time()))
@@ -28,27 +29,72 @@ class Store:
         ts = ((d / 'raw').read_text() for d in ds[:limit])
         return Script(self.path.name, '\n'.join(ts))
 
+    def delete(self, n):
+        ss = self.dist / 'script' / 'stmts'
+        ss.mkdir(exist_ok=True, parents=True)
+        ds = sorted((d for d in ss.iterdir() if d.is_dir()), key=lambda d: d.name)
+        for d in ds[n:]:
+            rmtree(d)
+
 class Interpreter:
     def __init__(self, store):
         self.store = store
+        self.onMemory = type('', (), {
+            'script': Script(self.store.fileName, ''),
+            'indexes': []})
         self._refresh()
 
     def _refresh(self):
-        self.executed = Script(self.store.fileName, '')
+        self.onMemory.indexes = []
         self.interpreter = InteractiveInterpreter({
             '__dill__': dill,
             '__Logger__': None})
 
-    def feed(self, script):
-        ondisk = self.store.loadScript()
-        (same, deleted, added) = ondisk.after(script)
+    @property
+    def _irreversible(self):
+        return (Script(self.store.fileName, '')
+                if len(self.onMemory.indexes) == 0 else
+                Script.composeWith(
+                    self.store.fileName,
+                    self.onMemory.script.cells[:max(self.onMemory.indexes)]))
 
-#class Kernel:
-#    def __init__(self, interpreter):
-#        self.interpreter = interpreter
-#
-#    def feed(self, script):
-#        self
+    def _loadMemory(self):
+        onDisk = self.store.loadScript()
+        (_, deleted, _) = self._irreversible.after(onDisk)
+        if len(deleted) > 0:
+            self._refresh()
+        self.onMemory.script = onDisk
+
+    def _refreshIfDeleted(self, script):
+        (_, deleted, _) = self._irreversible.after(script)
+        if len(deleted) > 0:
+            self._refresh()
+
+    def feed(self, script):
+        self._loadMemory()
+        self._refreshIfDeleted(script)
+        (same, _, added) = self.onMemory.script.after(script)
+        #for c in added:
+        #    self._prepare(self, len(same), c)
+        #    pass
+
+    def _prepare(self, same, cell):
+        pre = list(reversed(list(enumerate(same))))
+        load = [] # [('exec', idx) | ('load', idx, name)]
+        for n in cell.needed:
+            pass
+
+        rest = reversed([i
+                for (i, c) in enumerate(self.onMemory.script.cells[:numSame])
+                if i not in self.onMemory.indexes])
+
+        self.onMemory.script.cells[:numSame]
+
+    def _run(self, cell):
+        # TODO 準備
+        # TODO エラーハンドリング
+        self.interpreter.runsource(cell.raw, filename=self.store.fileName, symbol='exec')
+        # TODO 片付け
 
 if __name__ == '__main__':
     p = Path('example.py')
