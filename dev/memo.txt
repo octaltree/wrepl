@@ -45,3 +45,14 @@ sameのうち必要なCellをメモリに読み込みaddedを実行
 * 最新の[Cell]
 3通りの(same :: [Cell], deleted, added)が得られる
 どういう場合にリフレッシュするか
+
+
+
+
+cell.neededが必要
+それがlazyな文でchangedされたものだったらさらにその文のwillNeededが必要
+必要なのを探して見つかったcellについても再帰
+
+importedを保存 changedを保存
+changedのいずれかがlazyな文でchangedされたものだったらさらにその文のwillImported, willChangedを保存
+changedについて再帰

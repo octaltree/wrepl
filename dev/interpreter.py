@@ -80,15 +80,18 @@ class Interpreter:
 
     def _prepare(self, same, cell):
         pre = list(reversed(list(enumerate(same))))
-        load = [] # [('exec', idx) | ('load', idx, name)]
-        for n in cell.needed:
+        def rec(ts, c): # -> [('exec'|'load', idx)]
+            # ヒットしなかったら返す
             pass
+        load = rec(pre, cell)
+        #for n in cell.needed:
+        #    pass
 
-        rest = reversed([i
-                for (i, c) in enumerate(self.onMemory.script.cells[:numSame])
-                if i not in self.onMemory.indexes])
+        #rest = reversed([i
+        #        for (i, c) in enumerate(self.onMemory.script.cells[:numSame])
+        #        if i not in self.onMemory.indexes])
 
-        self.onMemory.script.cells[:numSame]
+        #self.onMemory.script.cells[:numSame]
 
     def _run(self, cell):
         # TODO 準備
