@@ -12,6 +12,7 @@ l = 3
 l
 stdin
 reader
+g = 2
 def main(u):
     global stderr
     from sys import stderr
@@ -42,18 +43,18 @@ def main(u):
     def foo():
         pass
     main
-    q
+    #q
     c
 
-@asdf
+#@asdf
 def asdfno():
     pass
 
 class Foo(object):
-    w = null
+    w = None
     class Bar:
         pass
-    def asdf():
+    def asdf(self):
         global a
         print(a)
 

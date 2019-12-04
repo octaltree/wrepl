@@ -9,6 +9,10 @@ class Cell:
         self.stmt = stmt
         self.table = symtable.symtable(raw, filename=fileName, compile_type='exec')
 
+    @property
+    def format(self):
+        return '\n' * (self.stmt.lineno - 1) + self.raw
+
     @getter
     def isLazy(self):
         return any([isinstance(self.stmt, t)

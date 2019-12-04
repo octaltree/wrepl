@@ -6,6 +6,7 @@ import json
 import dill
 from getter import getter
 from shutil import rmtree
+from collections import deque
 
 def _stamp():
     return str(int(time.time()))
@@ -16,10 +17,6 @@ class Store:
         self.path = filePath
         self.dist = dist if dist is not None else filePath.parent / '.{}.d'.format(filePath.name)
         self.dist.mkdir(exist_ok=True, parents=True)
-
-    @getter
-    def fileName(self):
-        return self.path.name
 
     def loadScript(self, n=-1):
         ss = self.dist / 'script' / 'stmts'
@@ -40,7 +37,7 @@ class Interpreter:
     def __init__(self, store):
         self.store = store
         self.onMemory = type('', (), {
-            'script': Script(self.store.fileName, ''),
+            'script': Script(self.store.path, ''),
             'indexes': []})
         self._refresh()
 
@@ -52,7 +49,7 @@ class Interpreter:
 
     @property
     def _irreversible(self):
-        return (Script(self.store.fileName, '')
+        return (Script(self.store.path, '')
                 if len(self.onMemory.indexes) == 0 else
                 Script.composeWith(
                     self.store.fileName,
@@ -71,32 +68,41 @@ class Interpreter:
             self._refresh()
 
     def feed(self, script):
+        #while True:
+        #    self._loadMemory()
+        #    self._refreshIfDeleted(script)
+        #    (same, _, added) = self.onMemory.script.after(script)
+        #    if len(added) == 0: break
+        #    cell = added[0]
+        #    self._run(same, cell)
         self._loadMemory()
         self._refreshIfDeleted(script)
         (same, _, added) = self.onMemory.script.after(script)
-        #for c in added:
-        #    self._prepare(self, len(same), c)
-        #    pass
+        for c in added:
+            self._run(same, c)
 
     def _prepare(self, same, cell):
         pre = list(reversed(list(enumerate(same))))
-        def rec(ts, c): # -> [idx]
-            # ヒットしなかったら返す
-            pass
-        load = rec(pre, cell)
-        #for n in cell.needed:
-        #    pass
+        def lines(ts, c): # -> [idx]
+            needed = deque()
+            res = set()
+            while len(needed) > 0:
+                n = needed.popleft()
+                for (i, c) in ts:
+                    if n in c.changed:
+                        res.add(i)
+                        if c.isLazy:
+                            for name in c.willChanged:
+                                needed.append(name)
+                        break
+            return res
+        load = sorted(list(lines(pre, cell)), key=lambda i: -i)
+        # TODO このインデックスから上書きしないように全てのnameを読み込む
 
-        #rest = reversed([i
-        #        for (i, c) in enumerate(self.onMemory.script.cells[:numSame])
-        #        if i not in self.onMemory.indexes])
-
-        #self.onMemory.script.cells[:numSame]
-
-    def _run(self, cell):
+    def _run(self, same, cell):
         # TODO 準備
         # TODO エラーハンドリング
-        self.interpreter.runsource(cell.raw, filename=self.store.fileName, symbol='exec')
+        self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
         # TODO 片付け
 
 if __name__ == '__main__':
