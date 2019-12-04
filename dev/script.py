@@ -20,11 +20,11 @@ class Script:
         def extract(raw, current, next):
             cli = current.lineno - 1
             off = '\n'.join(raw.splitlines()[cli:])[current.col_offset:]
-            if next is None: return off
+            if next is None: return off + '\n'
             nli = next.lineno - 1 - cli
             lines = off.splitlines()
             s = '\n'.join(lines[:nli]) + '\n' + lines[nli][:next.col_offset]
-            return s.strip()
+            return s
         return  [
                 Cell(self.fileName, extract(self.raw, c, n), c)
                 for (c, n) in zip_longest(self.ast.body, self.ast.body[1:])]
