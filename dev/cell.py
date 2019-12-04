@@ -4,10 +4,10 @@ from getter import getter
 import ast
 
 class Cell:
-    def __init__(self, fileName, raw, stmt):
+    def __init__(self, path, raw, stmt):
         self.raw = raw
         self.stmt = stmt
-        self.table = symtable.symtable(raw, filename=fileName, compile_type='exec')
+        self.table = symtable.symtable(raw, filename=path, compile_type='exec')
 
     @property
     def format(self):

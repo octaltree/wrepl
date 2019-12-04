@@ -52,7 +52,7 @@ class Interpreter:
         return (Script(self.store.path, '')
                 if len(self.onMemory.indexes) == 0 else
                 Script.composeWith(
-                    self.store.fileName,
+                    self.store.path,
                     self.onMemory.script.cells[:max(self.onMemory.indexes)]))
 
     def _loadMemory(self):

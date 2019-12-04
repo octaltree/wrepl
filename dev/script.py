@@ -4,16 +4,16 @@ from cell import Cell
 from getter import getter
 
 class Script:
-    def __init__(self, fileName, raw):
-        self.fileName = fileName
+    def __init__(self, path, raw):
+        self.path = path
         self.raw = raw
-        self.ast = ast.parse(raw, filename=fileName)
+        self.ast = ast.parse(raw, filename=path)
 
     def read(path):
         return Script(path, path.read_text())
 
-    def composeWith(fileName, cells):
-        return Script(fileName, '\n'.join((c.raw for c in cells)))
+    def composeWith(path, cells):
+        return Script(path, '\n'.join((c.raw for c in cells)))
 
     @getter
     def cells(self):
@@ -26,7 +26,7 @@ class Script:
             s = '\n'.join(lines[:nli]) + '\n' + lines[nli][:next.col_offset]
             return s
         return  [
-                Cell(self.fileName, extract(self.raw, c, n), c)
+                Cell(self.path, extract(self.raw, c, n), c)
                 for (c, n) in zip_longest(self.ast.body, self.ast.body[1:])]
 
     def countSameStmts(self, s):
