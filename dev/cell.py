@@ -66,6 +66,21 @@ class Cell:
     def equalAst(self, cell):
         return _equal(self.stmt, cell.stmt)
 
+    def allChanged(self, cells):
+        rev = list(reversed(list(enumerate(cells))))
+        res = set(self.changed)
+        needed = deque(self.needed)
+        found = set()
+        while len(needed) > 0:
+            n = needed.popleft()
+            found.add(n)
+            for (i, c) in rev:
+                if n in c.changed:
+                    needed.extend([n for n in c.needed if n not in found])
+                    if c.isLazy:
+                        res |= set(c.willChanged)
+        return res
+
 def _equal(na, nb):
     if type(na) is not type(nb): return False
     if isinstance(na, list):
@@ -92,5 +107,5 @@ if __name__ == '__main__':
     from script import Script
     from pathlib import Path
     for c in Script('example.py', Path('example.py').read_text()).cells:
-        print(c.raw)
+        print(c)
         print((c.needed, c.changed, c.willNeeded, c.willChanged))

@@ -7,7 +7,7 @@ a = 0
 c = 2
 c += 3
 i = []
-w
+#w
 l = 3
 l
 stdin

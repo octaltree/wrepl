@@ -39,11 +39,18 @@ class Store:
         d.mkdir(exist_ok=True, parents=True)
         return d
 
+    def saveCell(self, dist, cell):
+        d = dist / 'raw'
+        d.write_text(cell.raw)
+
     def valueDist(self, idx, name):
-        return self.dist / 'script' / 'stmts' / str(idx) / name
+        d = self.dist / 'script' / 'stmts' / str(idx) / 'values'
+        d.mkdir(exist_ok=True, parents=True)
+        return d / name
 
 class Core(InteractiveInterpreter):
     error = False
+    inner = False
     def showsyntaxerror(self, *args, **kwargs):
         self.error = True
         return super().showsyntaxerror(*args, **kwargs)
@@ -52,7 +59,22 @@ class Core(InteractiveInterpreter):
         self.error = True
         return super().showtraceback(*args, **kwargs)
 
+    def run_private(self, source):
+        origError = self.error
+        self.inner = True
+        self.error = False
+        try:
+            self.runsource(source, symbol='single')
+            res = not self.error
+            return res
+        except Exception as e:
+            raise e
+        finally:
+            self.error = origError
+            self.inner = False
+
     def write(self, *args, **kwargs):
+        #if self.inner: return None # TODO
         return super().write(*args, **kwargs)
 
 class Interpreter:
@@ -60,22 +82,27 @@ class Interpreter:
         self.store = store
         self.onMemory = type('', (), {
             'script': Script(self.store.path, ''),
-            'indexes': set()})
+            'loaded': []}) # [set(name)]
         self._refresh()
 
     def _refresh(self):
-        self.onMemory.indexes = set()
+        self.onMemory.loaded = []
         self.interpreter = Core({
-            '__dill__': dill,
+            '__pickle__': dill,
             '__Logger__': None})
+
+    def _setLoaded(self, idx, s):
+        self.onMemory.loaded += [set()
+                for _ in range(idx + 1 - len(self.onMemory.loaded))]
+        self.onMemory.loaded[idx] = s
 
     @property
     def _irreversible(self):
-        return (Script(self.store.path, '')
-                if len(self.onMemory.indexes) == 0 else
-                Script.composeWith(
-                    self.store.path,
-                    self.onMemory.script.cells[:max(self.onMemory.indexes) + 1]))
+        loaded = [i for (i, l) in enumerate(self.onMemory.loaded) if l]
+        if len(loaded) == 0: return Script(self.store.path, '')
+        return Script.composeWith(
+                self.store.path,
+                self.onMemory.script.cells[:max(loaded) + 1])
 
     def _loadMemory(self):
         onDisk = self.store.loadScript()
@@ -126,6 +153,12 @@ class Interpreter:
         load = sorted(list(lines(pre, cell)), key=lambda i: -i)
         # TODO このインデックスから上書きしないように全てのnameを読み込む
 
+    def _save(self, dist, name):
+        success = self.interpreter.run_private(
+                'with open("{}", "wb") as f:'.format(dist) +
+                '    __pickle__.dump({}, f)'.format(name))
+        return success
+
     def _run(self, same, cell): # success : bool
         # TODO 準備
         # TODO エラーハンドリング
@@ -133,10 +166,17 @@ class Interpreter:
         self.interpreter.error = False
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
         if not self.interpreter.error:
-            # TODO 保存
-            self.store.cellDist(idx)
-            self.onMemory.indexes.add(idx)
-            return True
+            self._setLoaded(idx, cell.allChanged(same))
+            try:
+                cd = self.store.cellDist(idx)
+                self.store.saveCell(cd, cell)
+                for n in cell.allChanged(same):
+                    s = self._save(self.store.valueDist(idx, n), n)
+                    if not s: raise Exception('save error')
+                return True
+            except Exception:
+                rmtree(self.store.cellDist(idx), ignore_errors=True)
+                self._refresh()
         return False
 
 if __name__ == '__main__':
