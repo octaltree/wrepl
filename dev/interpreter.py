@@ -1,52 +1,9 @@
+import dill
 from pathlib import Path
 from script import Script
+from store import Store
 from code import InteractiveInterpreter
-import time
-import json
-import dill
-from getter import getter
-from shutil import rmtree
 from collections import deque
-
-def _stamp():
-    return str(int(time.time()))
-
-
-class Store:
-    def __init__(self, filePath, dist=None):
-        self.path = filePath
-        self.dist = dist if dist is not None else filePath.parent / '.{}.d'.format(filePath.name)
-        self.dist.mkdir(exist_ok=True, parents=True)
-
-    def loadScript(self, n=-1):
-        ss = self.dist / 'script' / 'stmts'
-        ss.mkdir(exist_ok=True, parents=True)
-        ds = sorted((d for d in ss.iterdir() if d.is_dir()), key=lambda d: d.name)
-        limit = len(ds) if n == -1 else n
-        ts = ((d / 'raw').read_text() for d in ds[:limit])
-        return Script(self.path.name, '\n'.join(ts))
-
-    def delete(self, n): # Cellを最初のn個残して消す
-        ss = self.dist / 'script' / 'stmts'
-        ss.mkdir(exist_ok=True, parents=True)
-        ds = sorted((d for d in ss.iterdir() if d.is_dir()), key=lambda d: d.name)
-        for d in ds[n:]:
-            rmtree(d)
-
-    def cellDist(self, idx):
-        d = self.dist / 'script' / 'stmts' / str(idx)
-        rmtree(d, ignore_errors=True)
-        d.mkdir(exist_ok=True, parents=True)
-        return d
-
-    def saveCell(self, dist, cell):
-        d = dist / 'raw'
-        d.write_text(cell.raw)
-
-    def valueDist(self, idx, name):
-        d = self.dist / 'script' / 'stmts' / str(idx) / 'values'
-        d.mkdir(exist_ok=True, parents=True)
-        return d / name
 
 class Core(InteractiveInterpreter):
     error = False
@@ -160,22 +117,20 @@ class Interpreter:
         return success
 
     def _run(self, same, cell): # success : bool
-        # TODO 準備
-        # TODO エラーハンドリング
         idx = len(same)
+        # TODO 準備
         self.interpreter.error = False
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
         if not self.interpreter.error:
             self._setLoaded(idx, cell.allChanged(same))
             try:
                 cd = self.store.cellDist(idx)
-                self.store.saveCell(cd, cell)
                 for n in cell.allChanged(same):
                     s = self._save(self.store.valueDist(idx, n), n)
                     if not s: raise Exception('save error')
+                self.store.saveCell(cd, cell)
                 return True
             except Exception:
-                rmtree(self.store.cellDist(idx), ignore_errors=True)
                 self._refresh()
         return False
 
