@@ -2,6 +2,7 @@ import symtable
 from collections import deque
 from getter import getter
 import ast
+import json
 
 class Cell:
     def __init__(self, path, raw, stmt):
@@ -60,7 +61,7 @@ class Cell:
                 if s.is_referenced() or s.is_assigned() or s.is_imported()]
 
     def __repr__(self):
-        return '<Cell "{}">'.format(self.raw)
+        return '<Cell {} {}>'.format(self.stmt.lineno, json.dumps(self.raw.splitlines()[0]))
 
     def equalAst(self, cell):
         return _equal(self.stmt, cell.stmt)
