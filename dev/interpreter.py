@@ -26,24 +26,46 @@ class Store:
         ts = ((d / 'raw').read_text() for d in ds[:limit])
         return Script(self.path.name, '\n'.join(ts))
 
-    def delete(self, n):
+    def delete(self, n): # Cellを最初のn個残して消す
         ss = self.dist / 'script' / 'stmts'
         ss.mkdir(exist_ok=True, parents=True)
         ds = sorted((d for d in ss.iterdir() if d.is_dir()), key=lambda d: d.name)
         for d in ds[n:]:
             rmtree(d)
 
+    def cellDist(self, idx):
+        d = self.dist / 'script' / 'stmts' / str(idx)
+        rmtree(d, ignore_errors=True)
+        d.mkdir(exist_ok=True, parents=True)
+        return d
+
+    def valueDist(self, idx, name):
+        return self.dist / 'script' / 'stmts' / str(idx) / name
+
+class Core(InteractiveInterpreter):
+    error = False
+    def showsyntaxerror(self, *args, **kwargs):
+        self.error = True
+        return super().showsyntaxerror(*args, **kwargs)
+
+    def showtraceback(self, *args, **kwargs):
+        self.error = True
+        return super().showtraceback(*args, **kwargs)
+
+    def write(self, *args, **kwargs):
+        return super().write(*args, **kwargs)
+
 class Interpreter:
     def __init__(self, store):
         self.store = store
         self.onMemory = type('', (), {
             'script': Script(self.store.path, ''),
-            'indexes': []})
+            'indexes': set()})
         self._refresh()
 
     def _refresh(self):
-        self.onMemory.indexes = []
-        self.interpreter = InteractiveInterpreter({
+        self.onMemory.indexes = set()
+        self.interpreter = Core({
             '__dill__': dill,
             '__Logger__': None})
 
@@ -53,7 +75,7 @@ class Interpreter:
                 if len(self.onMemory.indexes) == 0 else
                 Script.composeWith(
                     self.store.path,
-                    self.onMemory.script.cells[:max(self.onMemory.indexes)]))
+                    self.onMemory.script.cells[:max(self.onMemory.indexes) + 1]))
 
     def _loadMemory(self):
         onDisk = self.store.loadScript()
@@ -68,18 +90,23 @@ class Interpreter:
             self._refresh()
 
     def feed(self, script):
-        #while True:
-        #    self._loadMemory()
-        #    self._refreshIfDeleted(script)
-        #    (same, _, added) = self.onMemory.script.after(script)
-        #    if len(added) == 0: break
-        #    cell = added[0]
-        #    self._run(same, cell)
-        self._loadMemory()
-        self._refreshIfDeleted(script)
-        (same, _, added) = self.onMemory.script.after(script)
-        for c in added:
-            self._run(same, c)
+        while True:
+            #self._loadMemory()
+            self._refreshIfDeleted(script)
+            (same, _, added) = self.onMemory.script.after(script)
+            if len(added) == 0: break
+            cell = added[0]
+            print(cell)
+            self.store.delete(len(same))
+            success = self._run(same, cell)
+            if not success: break
+            else:
+                self.onMemory.script = Script.composeWith(script.path, script.cells[:len(same) + 1])
+        #self._loadMemory()
+        #self._refreshIfDeleted(script)
+        #(same, _, added) = self.onMemory.script.after(script)
+        #for c in added:
+        #    print(self._run(same, c))
 
     def _prepare(self, same, cell):
         pre = list(reversed(list(enumerate(same))))
@@ -99,11 +126,18 @@ class Interpreter:
         load = sorted(list(lines(pre, cell)), key=lambda i: -i)
         # TODO このインデックスから上書きしないように全てのnameを読み込む
 
-    def _run(self, same, cell):
+    def _run(self, same, cell): # success : bool
         # TODO 準備
         # TODO エラーハンドリング
+        idx = len(same)
+        self.interpreter.error = False
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
-        # TODO 片付け
+        if not self.interpreter.error:
+            # TODO 保存
+            self.store.cellDist(idx)
+            self.onMemory.indexes.add(idx)
+            return True
+        return False
 
 if __name__ == '__main__':
     p = Path('example.py')
