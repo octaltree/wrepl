@@ -4,6 +4,7 @@ from script import Script
 from store import Store
 from code import InteractiveInterpreter
 from collections import deque
+from functools import reduce
 
 class Core(InteractiveInterpreter):
     error = False
@@ -21,7 +22,7 @@ class Core(InteractiveInterpreter):
         self.inner = True
         self.error = False
         try:
-            self.runsource(source, symbol='single')
+            self.runsource(source, symbol='exec')
             res = not self.error
             return res
         except Exception as e:
@@ -45,6 +46,7 @@ class Interpreter:
     def _refresh(self):
         self.onMemory.loaded = []
         self.interpreter = Core({
+            '__name__': '__main__',
             '__pickle__': dill,
             '__Logger__': None})
 
@@ -68,6 +70,16 @@ class Interpreter:
             self._refresh()
         self.onMemory.script = onDisk
 
+    def _load(self, cells, cell):
+        for (i, n) in cell.allNeeded(cells):
+            if n in _unionAll(self.onMemory.loaded[i:]): continue
+            success = self.interpreter.run_private(
+                    'with open("{}", "rb") as f:\n'.format(self.store.valueDist(i, n)) +
+                    '    {} = __pickle__.load(f)'.format(n))
+            if not success:
+                return i
+        return None
+
     def _refreshIfDeleted(self, script):
         (_, deleted, _) = self._irreversible.after(script)
         if len(deleted) > 0:
@@ -75,40 +87,19 @@ class Interpreter:
 
     def feed(self, script):
         while True:
-            #self._loadMemory()
+            self._loadMemory()
             self._refreshIfDeleted(script)
             (same, _, added) = self.onMemory.script.after(script)
             if len(added) == 0: break
             cell = added[0]
             print(cell)
             self.store.delete(len(same))
+            st = self._load(same, cell)
+            if st is not None:
+                self.store.delete(st)
+                continue
             success = self._run(same, cell)
             if not success: break
-            else:
-                self.onMemory.script = Script.composeWith(script.path, script.cells[:len(same) + 1])
-        #self._loadMemory()
-        #self._refreshIfDeleted(script)
-        #(same, _, added) = self.onMemory.script.after(script)
-        #for c in added:
-        #    print(self._run(same, c))
-
-    def _prepare(self, same, cell):
-        pre = list(reversed(list(enumerate(same))))
-        def lines(ts, c): # -> [idx]
-            needed = deque()
-            res = set()
-            while len(needed) > 0:
-                n = needed.popleft()
-                for (i, c) in ts:
-                    if n in c.changed:
-                        res.add(i)
-                        if c.isLazy:
-                            for name in c.willChanged:
-                                needed.append(name)
-                        break
-            return res
-        load = sorted(list(lines(pre, cell)), key=lambda i: -i)
-        # TODO このインデックスから上書きしないように全てのnameを読み込む
 
     def _save(self, dist, name):
         success = self.interpreter.run_private(
@@ -118,7 +109,6 @@ class Interpreter:
 
     def _run(self, same, cell): # success : bool
         idx = len(same)
-        # TODO 準備
         self.interpreter.error = False
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
         if not self.interpreter.error:
@@ -130,9 +120,12 @@ class Interpreter:
                     if not s: raise Exception('save error')
                 self.store.saveCell(cd, cell)
                 return True
-            except Exception:
+            except Exception as e:
                 self._refresh()
         return False
+
+def _unionAll(ss):
+    return reduce(lambda a, b: a | b, ss, set())
 
 if __name__ == '__main__':
     p = Path('example.py')

@@ -65,6 +65,7 @@ class Cell:
         return '<Cell {} {}>'.format(self.stmt.lineno, json.dumps(self.raw.splitlines()[0]))
 
     def equalAst(self, cell):
+        if not cell: return False
         return _equal(self.stmt, cell.stmt)
 
     def allChanged(self, cells): # -> set(name)
