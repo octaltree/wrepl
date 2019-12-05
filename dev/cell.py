@@ -3,6 +3,7 @@ from collections import deque
 from getter import getter
 import ast
 import json
+from functools import reduce
 
 class Cell:
     def __init__(self, path, raw, stmt):
@@ -66,7 +67,7 @@ class Cell:
     def equalAst(self, cell):
         return _equal(self.stmt, cell.stmt)
 
-    def allChanged(self, cells):
+    def allChanged(self, cells): # -> set(name)
         rev = list(reversed(list(enumerate(cells))))
         res = set(self.changed)
         needed = deque(self.needed)
@@ -79,6 +80,30 @@ class Cell:
                     needed.extend([n for n in c.needed if n not in found])
                     if c.isLazy:
                         res |= set(c.willChanged)
+        return res
+
+    def allNeeded(self, cells): # -> [(idx, name)]
+        rev = list(reversed(list(enumerate(cells))))
+        load = set() # 実際に必要な(idx, name)
+        needed = deque(self.needed) # 再帰に必要なname
+        found = set() # 再帰が無限ループしないように
+        while len(needed) > 0:
+            n = needed.popleft()
+            found.add(n)
+            for (i, c) in rev:
+                if n not in c.changed: continue
+                needed.extend([n for n in c.needed if n not in found])
+                load.add((i, n))
+                if c.isLazy:
+                    needed.extend([n for n in c.willNeeded if n not in found])
+        # loadは{(0, 'foo'), (1, 'foo')}だが読み込むのは(1, 'foo')だけでいい
+        tmp = sorted(list(load), key=lambda t: -t[0])
+        uniq = set()
+        res = []
+        for t in tmp:
+            if t[1] in uniq: continue
+            uniq.add(t[1])
+            res.append(t)
         return res
 
 def _equal(na, nb):
@@ -106,6 +131,9 @@ if __name__ == '__main__':
     assert not _equal(ast.parse('a = [1,3]\na'), ast.parse('a= [2,3]; a'))
     from script import Script
     from pathlib import Path
-    for c in Script('example.py', Path('example.py').read_text()).cells:
+    cs = Script.read(Path('example.py')).cells
+    for i in range(len(cs)):
+        c = cs[i]
         print(c)
         print((c.needed, c.changed, c.willNeeded, c.willChanged))
+        print((c.allNeeded(cs[:i]), c.allChanged(cs[:i])))
