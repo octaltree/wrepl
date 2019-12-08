@@ -11,6 +11,14 @@ class Cell:
         self.stmt = stmt
         self.table = symtable.symtable(raw, filename=path, compile_type='exec')
 
+    def simpleTarget(self):
+        s = self.stmt
+        if any([isinstance(s, t) for t in [ast.AugAssign, ast.AnnAssign]]):
+            return _names([s.target])
+        if isinstance(s, ast.Assign):
+            return _names(s.targets)
+        return []
+
     @property
     def format(self):
         return '\n' * (self.stmt.lineno - 1) + self.raw
@@ -125,6 +133,21 @@ def _equal(na, nb):
         return False
     return True
 
+def _names(exprs):
+    if isinstance(exprs, ast.AST): return _names([exprs])
+    if len(exprs) == 0: return []
+    if len(exprs) > 1: return reduce(
+            lambda a, b: a + b,
+            [_names(expr) for expr in exprs],
+            [])
+    expr = exprs[0]
+    if isinstance(expr, ast.Name): return [expr.id]
+    if not isinstance(expr, ast.AST): return []
+    return reduce(
+            lambda a, b: a + b,
+            [_names(getattr(expr, fn)) for fn in expr._fields],
+            [])
+
 
 if __name__ == '__main__':
     assert _equal(ast.parse('3\n2'), ast.parse('3;2'))
@@ -138,3 +161,5 @@ if __name__ == '__main__':
         print(c)
         print((c.needed, c.changed, c.willNeeded, c.willChanged))
         print((c.allNeeded(cs[:i]), c.allChanged(cs[:i])))
+    for c in cs:
+        print((c, c.simpleTarget()))
