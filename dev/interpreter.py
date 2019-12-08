@@ -94,7 +94,7 @@ class Interpreter:
             self._loadMemory()
             self._refreshIfDeleted(script)
             (same, _, added) = self.onMemory.script.after(script)
-            if len(added) == 0: break
+            if len(added) == 0: return 0
             cell = added[0]
             print(cell)
             self.store.delete(len(same))
@@ -103,7 +103,7 @@ class Interpreter:
                 self.store.delete(st)
                 continue
             success = self._run(same, cell)
-            if not success: break
+            if not success: return 1
 
     def _save(self, dist, name):
         success = self.interpreter.run_private(
