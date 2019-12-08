@@ -11,7 +11,7 @@ i = []
 l = 3
 l
 stdin
-reader
+#reader
 g = 2
 def main(u):
     global stderr
@@ -19,7 +19,7 @@ def main(u):
     global a
     global g
     g += 2
-    writer
+    #writer
     l = 3
     l += 2
     del l
