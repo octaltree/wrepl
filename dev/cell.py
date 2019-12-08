@@ -109,12 +109,12 @@ class Cell:
         # loadは{(0, 'foo'), (1, 'foo')}だが読み込むのは(1, 'foo')だけでいい
         tmp = sorted(list(load), key=lambda t: -t[0])
         uniq = set()
-        res = []
+        revres = []
         for t in tmp:
             if t[1] in uniq: continue
             uniq.add(t[1])
-            res.append(t)
-        return res
+            revres.append(t)
+        return sorted(revres, key=lambda t: t[0])
 
 def _equal(na, nb):
     if type(na) is not type(nb): return False

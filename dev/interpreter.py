@@ -19,6 +19,7 @@ class Core(InteractiveInterpreter):
         return super().showtraceback(*args, **kwargs)
 
     def run_private(self, source):
+        print(source)
         origError = self.error
         self.inner = True
         self.error = False
@@ -116,13 +117,13 @@ class Interpreter:
         # TODO log
         # TODO memo last execed expr
         self.interpreter.error = False
-        self.interpreter.run_private('__share__["result"] = {}')
-        self.interpreter.run_private('__share__["result"]["ready"] = __time__.time()')
+        self.share['result'] = {}
+        self.share['result']['ready'] = time.time()
         print('ready {}'.format(self.share['result']['ready']))
-        self.interpreter.run_private('__share__["tmp"] = __time__.perf_counter()')
+        start = time.perf_counter()
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
         print(cell.assigned)
-        self.interpreter.run_private('__share__["result"]["time"] = __time__.perf_counter() - __share__["tmp"]')
+        self.share['result']['time'] = time.perf_counter() - start
         self.share['result']['success'] = not self.interpreter.error
         # TODO print assignment
         if not self.interpreter.error:
