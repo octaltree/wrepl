@@ -1,5 +1,6 @@
 from script import Script
 from shutil import rmtree
+import json
 
 def _countUp():
     i = 0
@@ -49,7 +50,22 @@ class Store:
         d.mkdir(exist_ok=True, parents=True)
         return d / name
 
+    def resultDist(self, idx):
+        d = self.dist / 'script' / 'stmts' / str(idx)
+        d.mkdir(exist_ok=True, parents=True)
+        return d / 'result.json'
+
+    def readResult(self, idx):
+        dist = self.resultDist(idx)
+        t = dist.read_text()
+        return json.loads(t)
+
+    def writeResult(self, idx, jsonable):
+        dist = self.resultDist(idx)
+        dist.write_text(json.dumps(jsonable, ensure_ascii=True))
+
 if __name__ == '__main__':
     from pathlib import Path
     p = Path('example.py')
-    print(Store(p).loadScript().cells)
+    s = Store(p)
+    print(s.loadScript().cells)
