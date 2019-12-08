@@ -5,6 +5,7 @@ from store import Store
 from code import InteractiveInterpreter
 from collections import deque
 from functools import reduce
+import time
 
 class Core(InteractiveInterpreter):
     error = False
@@ -44,11 +45,14 @@ class Interpreter:
         self._refresh()
 
     def _refresh(self):
+        self.share = {}
         self.onMemory.loaded = []
         self.interpreter = Core({
             '__name__': '__main__',
+            '__time__': time,
             '__pickle__': dill,
-            '__Logger__': None})
+            '__share__': self.share,
+            '__Logger__': None}) # TODO
 
     def _setLoaded(self, idx, s):
         self.onMemory.loaded += [set()
@@ -109,12 +113,23 @@ class Interpreter:
 
     def _run(self, same, cell): # success : bool
         idx = len(same)
+        # TODO log
         self.interpreter.error = False
+        self.interpreter.run_private('__share__["result"] = {}')
+        self.interpreter.run_private('__share__["result"]["ready"] = __time__.time()')
+        print('ready {}'.format(self.share['result']['ready']))
+        self.interpreter.run_private('__share__["tmp"] = __time__.perf_counter()')
         self.interpreter.runsource(cell.format, filename=self.store.path, symbol='exec')
+        print(cell.assigned)
+        self.interpreter.run_private('__share__["result"]["time"] = __time__.perf_counter() - __share__["tmp"]')
+        self.share['result']['success'] = not self.interpreter.error
+        # TODO print assignment
         if not self.interpreter.error:
-            self._setLoaded(idx, cell.allChanged(same))
+            print('time {}'.format(self.share['result']['time']))
             try:
+                self._setLoaded(idx, cell.allChanged(same))
                 cd = self.store.cellDist(idx)
+                self.store.writeResult(idx, self.share['result'])
                 for n in cell.allChanged(same):
                     s = self._save(self.store.valueDist(idx, n), n)
                     if not s: raise Exception('save error')
