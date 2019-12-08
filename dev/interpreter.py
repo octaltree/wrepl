@@ -114,6 +114,7 @@ class Interpreter:
     def _run(self, same, cell): # success : bool
         idx = len(same)
         # TODO log
+        # TODO memo last execed expr
         self.interpreter.error = False
         self.interpreter.run_private('__share__["result"] = {}')
         self.interpreter.run_private('__share__["result"]["ready"] = __time__.time()')

@@ -15,6 +15,10 @@ class Cell:
     def assigned(self): # 表示するやつ
         return [s.get_name() for s in self._symbols if s.is_assigned()]
 
+    @getter
+    def isExpr(self):
+        return isinstance(self.stmt, ast.Expr)
+
     @property
     def format(self):
         return '\n' * (self.stmt.lineno - 1) + self.raw
