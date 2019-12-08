@@ -8,7 +8,6 @@ class Script:
         self.path = path
         self.raw = raw
         self.ast = ast.parse(raw, filename=path)
-        # TODO シンタックスエラーを見やすく
 
     def read(path):
         return Script(path, path.read_text())

@@ -7,6 +7,7 @@ from watcher import Watcher
 from store import Store
 from script import Script
 from interpreter import Interpreter
+import traceback
 
 interpreter = None
 
@@ -28,7 +29,12 @@ def main():
     return 0
 
 def once(path, args):
-    return interpreter.feed(Script.read(path))
+    try:
+        s = Script.read(path)
+    except SyntaxError as e:
+        traceback.print_exc(limit=0)
+        return 1
+    return interpreter.feed(s)
 
 def parseArgs():
     parser = argparse.ArgumentParser()
