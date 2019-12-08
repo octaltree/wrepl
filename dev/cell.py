@@ -13,6 +13,7 @@ class Cell:
 
     @getter
     def assigned(self): # 表示するやつ
+        if self.isLazy: return []
         return [s.get_name() for s in self._symbols if s.is_assigned()]
 
     @getter
