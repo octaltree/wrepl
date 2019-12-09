@@ -1,0 +1,5 @@
+('dill._dill', '_create_function')
+('dill._dill', '_load_type')
+'CodeType' |-> <class 'code'>
+('dill._dill', '_import_module')
+('builtins', '__dict__')

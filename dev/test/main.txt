@@ -1,0 +1,8 @@
+('dill._dill', '_create_function')
+('dill._dill', '_load_type')
+'CodeType' |-> <class 'code'>
+('__builtin__', '__main__')
+fglobals
+
+
+887:            pickler.write(bytes('c__builtin__\n__main__\n', 'UTF-8'))
